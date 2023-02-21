@@ -461,7 +461,8 @@ def gamemode(difficulty, size):
             pygame.draw.rect(screen, "#5DADE2", stats_rect, border_radius = 10)
             screen.blit(score_surf, (376, 350))
         else:
-            ticks += 1
+            if start:
+                ticks += 1
             score = int(ticks/60//1)
             score_surf = font2.render(f"Score: {str(score).zfill(3)}", True, "#FFFFFF")
 
