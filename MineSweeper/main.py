@@ -1,5 +1,23 @@
 # Minesweeper Game
 
+"""
+TODO:
+change the safe radius of the first click in gen_field to 1 tile around it. FIX THIS. SOMETIMES THE SAFE ZONE ISNT THERE
+
+sound effects when you clear a tile
+
+show the number of mines left
+
+[================== URGENT ==================]
+Explosion animation sometimes starts at wrong frame:
+so need to input the starting tick to the function or just input the correct tick.
+
+Sometimes doesnt chord because thinks theres -ive unflagged mines
+checks unflagged mines by looping through adjacent
+
+[============================================]
+"""
+
 import pygame, random, os, csv, sys
 from Button import Button
 
@@ -203,11 +221,11 @@ class Board():
                                     self.uncleared.remove((row_num + x, tile_num + y))
                                     changed_num += 1
                                     changed = True
-
+        cap = lambda x: int(x) if x < 3 else 2
         if changed_num > 0:
             print(f"{changed_num=}")
-            print(f"{self.size//changed_num=}")
-            clears[2].play()
+            print(cap(changed_num//12))
+            clears[cap(changed_num//12)].play()
 
         #Doesnt work. reveals everything around a 0 tile
         # zeros = [(zero[0] + x, zero[1] + y) for x in [-1, 0, 1] for y in [-1, 0, 1] for zero in self.uncleared if self.field[zero[0]][zero[1]] == 0]
@@ -271,7 +289,7 @@ class Board():
                             cleared = True
                         if not cleared or max_chord < self.field[pos[0]][pos[1]]:
                             max_chord = self.field[pos[0]][pos[1]]
-            if not cleared:
+            if not cleared and max_chord > 0:
                 singles[max_chord].play()
 
 def boom():
