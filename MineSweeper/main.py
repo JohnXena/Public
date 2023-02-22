@@ -1,23 +1,5 @@
 # Minesweeper Game
 
-"""
-TODO:
-change the safe radius of the first click in gen_field to 1 tile around it. FIX THIS. SOMETIMES THE SAFE ZONE ISNT THERE
-
-sound effects when you clear a tile
-
-show the number of mines left
-
-[================== URGENT ==================]
-Explosion animation sometimes starts at wrong frame:
-so need to input the starting tick to the function or just input the correct tick.
-
-Sometimes doesnt chord because thinks theres -ive unflagged mines
-checks unflagged mines by looping through adjacent
-
-[============================================]
-"""
-
 import pygame, random, os, csv, sys
 from Button import Button
 
@@ -185,7 +167,7 @@ class Board():
             if pos in self.flagged_tiles:
                 screen.blit(self.flag, [i for i in coord(pos[::-1])])
 
-    def update(self, tile_pos):
+    def update(self, tile_pos, playsound):
         # print(f"updated {tile_pos}")
         tile = self.field[tile_pos[0]][tile_pos[1]]
         branches = [tile_pos]
@@ -205,8 +187,11 @@ class Board():
             else:
                 #add the position to the cleared list
                 self.uncleared.remove(tile_pos)
+                if playsound:
+                    singles[self.field[tile_pos[0]][tile_pos[1]]].play()
 
         changed = True
+        changed_num = 0
         while changed:
             changed = False
             for row_num, row in enumerate(self.field):
@@ -216,7 +201,13 @@ class Board():
                             for y in [-1, 0, 1]:
                                 if (row_num + x, tile_num + y) in self.uncleared:
                                     self.uncleared.remove((row_num + x, tile_num + y))
+                                    changed_num += 1
                                     changed = True
+
+        if changed_num > 0:
+            print(f"{changed_num=}")
+            print(f"{self.size//changed_num=}")
+            clears[2].play()
 
         #Doesnt work. reveals everything around a 0 tile
         # zeros = [(zero[0] + x, zero[1] + y) for x in [-1, 0, 1] for y in [-1, 0, 1] for zero in self.uncleared if self.field[zero[0]][zero[1]] == 0]
@@ -264,12 +255,24 @@ class Board():
 
         # print(f"{adjacent_mines=}")
 
+        #highest value tile that has been chorded
+        max_chord = 0
+
+        cleared = False
+
         if not adjacent_mines and tile_pos not in self.uncleared:
             #chordable
             for pos in chord_zone:
                 if pos in self.uncleared and pos not in self.flagged_tiles:
                     # self.uncleared.remove(pos)
-                    self.update(pos)
+                    self.update(pos, False)
+                    if self.field[pos[0]][pos[1]] != "*":
+                        if self.field[pos[0]][pos[1]] == 0:
+                            cleared = True
+                        if not cleared or max_chord < self.field[pos[0]][pos[1]]:
+                            max_chord = self.field[pos[0]][pos[1]]
+            if not cleared:
+                singles[max_chord].play()
 
 def boom():
     #unused
@@ -302,6 +305,12 @@ clock_rect = clock_surf.get_rect(topleft = (320, 85))
 flag_surf = pygame.image.load(os.path.join("assets", "flag.png")).convert_alpha()
 flag_surf = pygame.transform.scale(flag_surf, (60, 60))
 flag_rect = flag_surf.get_rect(topleft = (520, 85))
+
+#sounds
+singles = [pygame.mixer.Sound(os.path.join("assets", "beeps", f"s{i}.mp3")) for i in range(1, 9)]
+clears = [pygame.mixer.Sound(os.path.join("assets", "beeps", f"c{i}.mp3")) for i in range(1, 4)]
+
+win = pygame.mixer.Sound(os.path.join("assets", "beeps", "w.mp3"))
 
 # Explosion
 explosion = [pygame.image.load(os.path.join("assets", "explosion", f"frame_{str(i)}.png")).convert_alpha() for i in range(31)]
@@ -381,6 +390,7 @@ def gamemode(difficulty, size):
     run = True
     ticks = 0
     start_tick = 0
+    won = False
     start = False
 
     minefield = Board(difficulty)
@@ -418,12 +428,12 @@ def gamemode(difficulty, size):
                         start = True
                         minefield.gen_field(minefield.clicked_tile(pygame.mouse.get_pos()))
                         minefield.calc_field()
-                        minefield.update(minefield.clicked_tile(pygame.mouse.get_pos()))
+                        minefield.update(minefield.clicked_tile(pygame.mouse.get_pos()), True)
                         minefield.draw()
                     else:
                         if not (minefield.dead or len(minefield.uncleared) == minefield.mines):
                             if event.button == 1:
-                                minefield.update(minefield.clicked_tile(pygame.mouse.get_pos()))
+                                minefield.update(minefield.clicked_tile(pygame.mouse.get_pos()), True)
                                 if pygame.mouse.get_pressed()[2]:
                                     minefield.chord(minefield.clicked_tile(pygame.mouse.get_pos()))
                             elif event.button == 3:
@@ -457,6 +467,9 @@ def gamemode(difficulty, size):
         minefield.draw_cover()
         if len(minefield.uncleared) == minefield.mines:
             # print(f"you win with a time of {ticks/60:.1f}")
+            if not won:
+                win.play()
+                won = True
             pygame.draw.rect(screen, "#85C1E9", stats_shadow, border_radius = 10)
             pygame.draw.rect(screen, "#5DADE2", stats_rect, border_radius = 10)
             screen.blit(score_surf, (376, 350))
