@@ -331,9 +331,9 @@ clears = [pygame.mixer.Sound(os.path.join("assets", "beeps", f"c{i}.mp3")) for i
 win = pygame.mixer.Sound(os.path.join("assets", "beeps", "w.mp3"))
 
 # Explosion
-explosion = [pygame.image.load(os.path.join("assets", "explosion", f"frame_{str(i)}.png")).convert_alpha() for i in range(31)]
-explosion = [pygame.transform.scale(frame, (1900, 960)) for frame in explosion]
-explosion_rects = [frame.get_rect(center = (480, 480)) for frame in explosion]
+# explosion = [pygame.image.load(os.path.join("assets", "explosion", f"frame_{str(i)}.png")).convert_alpha() for i in range(31)]
+# explosion = [pygame.transform.scale(frame, (1900, 960)) for frame in explosion]
+# explosion_rects = [frame.get_rect(center = (480, 480)) for frame in explosion]
 bruh_sound = pygame.mixer.Sound(os.path.join("assets", "bruh.mp3"))
 
 # mine
